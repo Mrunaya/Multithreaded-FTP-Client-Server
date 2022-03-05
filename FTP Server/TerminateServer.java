@@ -1,10 +1,11 @@
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Map;
 
 public class TerminateServer extends Thread{
 	ServerSocket serverNSocket;
-	public TerminateServer(int tsocket) throws IOException {
+	public TerminateServer(int tsocket,Map<Integer, String> lockTable) throws IOException {
 		// TODO Auto-generated constructor stub
 		serverNSocket=new ServerSocket(tsocket);
 		}

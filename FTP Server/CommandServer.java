@@ -5,12 +5,16 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 
 public class CommandServer extends Thread{
 	public static String SERVER_DIRECTORY = System.getProperty("user.dir"); 
 	Socket nSocket;
-	public CommandServer(int port, Socket socket) {
+	public Map<Integer, String> lockTable;
+	public CommandServer(int port, Socket socket, Map<Integer, String> LockTable) {
 		nSocket=socket;
+		lockTable=LockTable;
 		// TODO Auto-generated constructor stub
 	}
 	@Override
@@ -19,7 +23,7 @@ try {
 		System.out.println("Client connected!");
 		ObjectInputStream inputStream = new ObjectInputStream(nSocket.getInputStream());
 		ObjectOutputStream outputStream = new ObjectOutputStream(nSocket.getOutputStream());
-
+		int commandId;
 	while(true) {
 		
 	String inputCmd = (String) inputStream.readObject();
@@ -35,6 +39,22 @@ try {
 	}
 	switch(userInput[0]) {
 	case "get":// get file
+		 commandId = lockTable.size() +1;
+		while(true) {
+			boolean processingCmd=false;
+			for(Map.Entry<Integer,String> entry : lockTable.entrySet()) {
+				if(entry.getValue().equals("In Process for put " + userInput[1])) {
+					 processingCmd = true;
+				}
+				
+			}
+			if(!processingCmd)
+				break;
+			Thread.sleep(10000);
+			System.out.println("Client need to wait as other request is already in process");
+		}
+		
+		
 		File file= new File(SERVER_DIRECTORY+"/"+userInput[1]);
 		byte bGet[] = new byte[1000];
 		if(file.exists()) {
@@ -52,11 +72,30 @@ try {
 		break;
 
 	case "put":// put file
+		 commandId = lockTable.size() +1;
+		while(true) {
+			boolean processingCmd=false;
+			for(Map.Entry<Integer,String> entry : lockTable.entrySet()) {
+				if(entry.getValue().equals("In Process for put " + userInput[1])) {
+					 processingCmd = true;
+				}
+				
+			}
+			if(!processingCmd)
+				break;
+			Thread.sleep(1000);
+			System.out.println("Client need to wait as other request is already in process");
+		}
+		
+		lockTable.put(commandId,"In Process for put " + userInput[1]);
 		FileOutputStream fileStreamPut = new FileOutputStream(SERVER_DIRECTORY+"/copy"+userInput[1]);
 		byte bPut[] = new byte[1000];
 		inputStream.read(bPut, 0, bPut.length);
 		fileStreamPut.write(bPut, 0, bPut.length);
 		fileStreamPut.flush();
+		Thread.sleep(3000);
+		System.out.println("waiting in sleep");
+		lockTable.put(commandId,"Finished for put" + userInput[1]);
 		break;
 		
 	case "delete": //Delete File

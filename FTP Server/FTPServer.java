@@ -8,10 +8,13 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 
 public class FTPServer {
 	
-	
+
+	public static 	Map<Integer, String> lockTable= new HashMap<Integer, String>();
 	public static void main(String[] args) throws IOException, ClassNotFoundException {
 		// TODO Auto-generated method stub
 		
@@ -19,10 +22,10 @@ public class FTPServer {
 		int tPort=Integer.parseInt(args[1]);
 		System.out.println("Server thread starting...");
 		
-		NormalServer nThread = new NormalServer(nPort);
+		NormalServer nThread = new NormalServer(nPort,lockTable);
 		nThread.start();
 		
-		TerminateServer tThread = new TerminateServer(tPort);
+		TerminateServer tThread = new TerminateServer(tPort,lockTable);
 		tThread.start();
 		
 		
