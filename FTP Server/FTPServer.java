@@ -14,7 +14,7 @@ import java.util.Map;
 public class FTPServer {
 	
 
-	public static 	Map<Integer, String> lockTable= new HashMap<Integer, String>();
+	public static 	HashMap<Integer, String> lockTable= new HashMap<Integer, String>();
 	public static void main(String[] args) throws IOException, ClassNotFoundException {
 		// TODO Auto-generated method stub
 		

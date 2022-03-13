@@ -15,28 +15,27 @@ public class NormalServer extends Thread{
 	public static Map<Integer, String> lockTable;
 	static Socket socket = null;
 	static int port;
-	public NormalServer(int nPort, Map<Integer, String> LockTable) throws IOException { 
-		 serverNSocket=new ServerSocket(nPort);
-		 port=nPort;
-		 lockTable=LockTable;
+	public NormalServer(int nPort, HashMap<Integer, String> lockTable) throws IOException { 
+		serverNSocket=new ServerSocket(nPort);
+		this.port=nPort;
+		this.lockTable=lockTable;
 	}
-		// TODO Auto-generated constructor stub
-		@Override
-		public void run() {
+	// TODO Auto-generated constructor stub
+	@Override
+	public void run() {
 		while(true) {
-			
+
 			try {
 				socket = serverNSocket.accept();
-				
 				CommandServer nThread = new CommandServer(port,socket,lockTable);
 				nThread.start();
-				}catch(Exception e) {
-			e.printStackTrace();
+			}catch(Exception e) {
+				e.printStackTrace();
+			}
 		}
-		}
-		
+
 	}
 
-	
+
 
 }

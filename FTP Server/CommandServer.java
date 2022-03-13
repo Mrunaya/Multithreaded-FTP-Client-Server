@@ -11,6 +11,7 @@ import java.util.Map;
 public class CommandServer extends Thread{
 	public static String SERVER_DIRECTORY = System.getProperty("user.dir"); 
 	Socket nSocket;
+	int commandId;
 	public Map<Integer, String> lockTable;
 	public CommandServer(int port, Socket socket, Map<Integer, String> LockTable) {
 		nSocket=socket;
@@ -23,7 +24,7 @@ try {
 		System.out.println("Client connected!");
 		ObjectInputStream inputStream = new ObjectInputStream(nSocket.getInputStream());
 		ObjectOutputStream outputStream = new ObjectOutputStream(nSocket.getOutputStream());
-		int commandId;
+		
 	while(true) {
 		
 	String inputCmd = (String) inputStream.readObject();
@@ -39,7 +40,8 @@ try {
 	}
 	switch(userInput[0]) {
 	case "get":// get file
-		 commandId = lockTable.size() +1;
+		  commandId = lockTable.size() +1;
+		 outputStream.writeInt(commandId);
 		while(true) {
 			boolean processingCmd=false;
 			for(Map.Entry<Integer,String> entry : lockTable.entrySet()) {
@@ -56,23 +58,46 @@ try {
 		
 		
 		File file= new File(SERVER_DIRECTORY+"/"+userInput[1]);
-		byte bGet[] = new byte[1000];
+		int offset=0;
+		int length=(int)file.length();
+		byte bGet[] = new byte[length];
+		boolean terminated=false;
 		if(file.exists()) {
+			lockTable.put(commandId,"In Process for get " + userInput[1]);
 			FileInputStream fileInStream = new FileInputStream(file);
 			fileInStream.read(bGet, 0, bGet.length);
-			outputStream.write(bGet, 0, bGet.length);
+			fileInStream.close();
+			outputStream.writeInt(length);
+			if(length<1000) {
+				outputStream.write(bGet, 0, bGet.length);
+			}else {
+				for(offset=0; offset<=length; offset+=1000 ) {
+					
+					String state = lockTable.get(Integer.parseInt( String.valueOf(commandId)));
+					if(state.contains("Terminate")) {
+						outputStream.writeObject("terminated");
+						break;
+					}else
+			               outputStream.writeObject("Still Runnuing");
+					if(length-offset>1000)
+						outputStream.write(bGet,offset,1000);
+					else
+						outputStream.write(bGet, offset, length % 1000);
+					Thread.sleep(5000);
+					System.out.println("sleeping");
+				}
+			}
 			System.out.println("File has been sent!");
 		}
 		else{
 			
-			outputStream.write(bGet,0,bGet.length);
 			System.out.println("File do not exist!");
 		}
 		outputStream.flush();
 		break;
 
 	case "put":// put file
-		 commandId = lockTable.size() +1;
+		 
 		while(true) {
 			boolean processingCmd=false;
 			for(Map.Entry<Integer,String> entry : lockTable.entrySet()) {
@@ -83,17 +108,45 @@ try {
 			}
 			if(!processingCmd)
 				break;
-			Thread.sleep(1000);
+			Thread.sleep(10000);
 			System.out.println("Client need to wait as other request is already in process");
 		}
-		
+		commandId = lockTable.size() +1;
+		System.out.println("command id in out"+commandId);
+		outputStream.writeObject(commandId);
+
+		System.out.println("Wrote commandif");
 		lockTable.put(commandId,"In Process for put " + userInput[1]);
 		FileOutputStream fileStreamPut = new FileOutputStream(SERVER_DIRECTORY+"/copy"+userInput[1]);
-		byte bPut[] = new byte[1000];
-		inputStream.read(bPut, 0, bPut.length);
-		fileStreamPut.write(bPut, 0, bPut.length);
+		
+		offset=0;
+		length=inputStream.readInt();
+		byte bPut[] = new byte[length];
+		if(length < 1000) {
+			System.out.println("Sending file");
+			inputStream.read(bPut, 0, bPut.length);
+		}else {
+			System.out.println("Sending file 2");
+			for(offset=0; offset<=length; offset+=1000 ) {
+				String state = lockTable.get(Integer.parseInt( String.valueOf(commandId)));
+				if(state.contains("Terminate")) {
+					outputStream.writeObject("terminated");
+					File fileP = new File("copy".concat(userInput[1]));
+	                 fileP.delete();
+					break;
+				}else
+		               outputStream.writeObject("Still Runnuing");
+				if(length-offset>1000)
+					inputStream.read(bPut,offset,1000);
+				else
+					inputStream.read(bPut, offset, length % 1000);
+				Thread.sleep(5000);
+				System.out.println("Sleeping");
+			}
+		}
+		
+		fileStreamPut.write(bPut,0,bPut.length);
 		fileStreamPut.flush();
-		Thread.sleep(3000);
 		System.out.println("waiting in sleep");
 		lockTable.put(commandId,"Finished for put" + userInput[1]);
 		break;
@@ -151,7 +204,7 @@ try {
 
 	}
 	}catch(Exception e) {
-		
+		e.printStackTrace();
 	}
 	}
 }

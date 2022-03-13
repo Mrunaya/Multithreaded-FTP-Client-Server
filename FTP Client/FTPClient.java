@@ -12,10 +12,10 @@ public class FTPClient {
 		// TODO Auto-generated method stub
 		String currentWorkingDirectory = "myftp>";
 		String serverName=args[0];
-		int nport=Integer.parseInt(args[1]);
-		int tport=Integer.parseInt(args[2]);
+		int nPort=Integer.parseInt(args[1]);
+		int tPort=Integer.parseInt(args[2]);
 		
-		Socket nsocket = new Socket(serverName,nport);
+		Socket nsocket = new Socket(serverName,nPort);
 		String userCmd = "";
 		ObjectOutputStream outputStream = new  ObjectOutputStream(nsocket.getOutputStream());
 		ObjectInputStream inputStream = new ObjectInputStream(nsocket.getInputStream());
@@ -34,10 +34,27 @@ public class FTPClient {
 				switch (cmdVal[0]) {
 				case "get": //  Get file from server->client
 					outputStream.writeObject("get "+cmdVal[1]); 
-
-					FileOutputStream fileStreamGet = new FileOutputStream(cmdVal[1]);
-					byte bGet[] = new byte[1000];
-					inputStream.read(bGet, 0, bGet.length);
+					int commandID = inputStream.readInt();
+					FileOutputStream fileStreamGet = new FileOutputStream("copy".concat(cmdVal[1]));
+					int length=inputStream.readInt();
+					int offset=0;
+					byte bGet[] = new byte[length];
+					if(length<1000) {
+						inputStream.read(bGet, 0, bGet.length);
+					}else {
+						for(offset=0; offset<=length; offset+=1000 ) {
+							String state = (String)inputStream.readObject();
+				             if(state.contains("Terminated")) {
+				            	 File file = new File("copy".concat(cmdVal[1]));
+				                 file.delete();
+				                 break;
+				             }
+							if(length-offset>1000)
+								inputStream.read(bGet,offset,1000);
+							else
+								inputStream.read(bGet, offset, length % 1000);
+						}
+					}
 					fileStreamGet.write(bGet, 0, bGet.length);
 					//outputStream.flush();
 					break;
@@ -45,20 +62,52 @@ public class FTPClient {
 				case "put": // Put file
 					
 					
-					File file= new File(cmdVal[1]);
+					File file = new File(cmdVal[1]);
 					if(file.exists()) {
-					FileInputStream fileStreamPut = new FileInputStream(file);
-					outputStream.writeObject("put "+cmdVal[1]);
-					byte bPut[] = new byte[1000];
-					fileStreamPut.read(bPut, 0, bPut.length);
-					outputStream.write(bPut, 0, bPut.length);
-					outputStream.flush();
+						FileInputStream fileStreamPut = new FileInputStream(file);
+						outputStream.writeObject("put "+cmdVal[1]);
+						commandID = (int) inputStream.readObject();
+						System.out.println("Command id is " + commandID);
+						length = (int)file.length();
+						byte bPut[] = new byte[length];
+						fileStreamPut.read(bPut, 0, bPut.length);
+						outputStream.writeInt(length);
+						outputStream.flush();
+						
+						offset=0;
+					if(length<1000) {
+						System.out.println("hello");
+						outputStream.write(bPut, 0, bPut.length);
+					}else {
+						for(offset=0; offset<=length; offset+=1000 ) {
+							String state = (String)inputStream.readObject();
+							if(state.contains("terminated")) {
+								System.out.println("Terminated by user!");
+								break;
+								}
+							if(length-offset>1000) {
+							outputStream.write(bPut,offset,1000);
+							outputStream.flush();
+							}
+							else
+								outputStream.write(bPut, offset, length % 1000);
+						}
+						
+					}
+					
 					}else {
 						System.out.println("File at the location do not exists!\n");
 					}
-					//outputStream.flush();
+					outputStream.flush();
 					break;
 
+				
+				case "get&":
+				case "put&": ClientT runnable = new ClientT(serverName,userCmd,nPort);
+				Thread thread = new Thread(runnable,"thread");
+				thread.start();
+				Thread.sleep(200);
+				break;
 				case "delete": // Delete file
 					
 					outputStream.writeObject("delete "+cmdVal[1]);
@@ -96,10 +145,9 @@ public class FTPClient {
 					
 					break;
 				case "terminate":
-					Socket tSocket = new Socket(serverName,tport);
+					Socket tSocket = new Socket(serverName,tPort);
 					ObjectOutputStream outputStreamT = new  ObjectOutputStream(tSocket.getOutputStream());
-					ObjectInputStream inputStreamT = new ObjectInputStream(tSocket.getInputStream());
-					
+					outputStreamT.writeObject(cmdVal[1]);
 					
 					break;
 				case "quit": //Exit
@@ -120,6 +168,6 @@ public class FTPClient {
 				}		
 			}
 	
-		}catch(Exception e) {}
+		}catch(Exception e) {e.printStackTrace();}
 	}
 }
