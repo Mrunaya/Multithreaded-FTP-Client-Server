@@ -85,8 +85,8 @@ try {
 						outputStream.write(bGet,offset,1000);
 					else
 						outputStream.write(bGet, offset, length % 1000);
-					Thread.sleep(5000);
-					System.out.println("sleeping");
+					//Thread.sleep(5000);
+					//System.out.println("sleeping");
 				}
 			}
 			lockTable.put(commandId,"Finished for get" + userInput[1]);
@@ -139,8 +139,8 @@ try {
 					inputStream.read(bPut,offset,1000);
 				else
 					inputStream.read(bPut, offset, length % 1000);
-				Thread.sleep(5000);
-				System.out.println("Sleeping");
+				//Thread.sleep(5000);
+				//System.out.println("Sleeping");
 			}
 		}
 		
