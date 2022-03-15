@@ -67,7 +67,6 @@ public class FTPClient {
 						FileInputStream fileStreamPut = new FileInputStream(file);
 						outputStream.writeObject("put "+cmdVal[1]);
 						commandID = (int) inputStream.readObject();
-						System.out.println("Command id is " + commandID);
 						length = (int)file.length();
 						byte bPut[] = new byte[length];
 						fileStreamPut.read(bPut, 0, bPut.length);
