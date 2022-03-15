@@ -12,23 +12,25 @@ public class CommandServer extends Thread{
 	public static String SERVER_DIRECTORY = System.getProperty("user.dir"); 
 	Socket nSocket;
 	int commandId;
+	int threadNo;
 	public Map<Integer, String> lockTable;
-	public CommandServer(int port, Socket socket, Map<Integer, String> LockTable) {
+	public CommandServer(int port, Socket socket, Map<Integer, String> LockTable, int ClientNo) {
 		nSocket=socket;
 		lockTable=LockTable;
+		threadNo=ClientNo;
 		// TODO Auto-generated constructor stub
 	}
 	@Override
 	public void run() {
 try {
-		System.out.println("Client connected!");
+		System.out.println("Thread "+threadNo+" Started!");
 		ObjectInputStream inputStream = new ObjectInputStream(nSocket.getInputStream());
 		ObjectOutputStream outputStream = new ObjectOutputStream(nSocket.getOutputStream());
 		
 	while(true) {
 		
 	String inputCmd = (String) inputStream.readObject();
-	System.out.println("Input command is : " + inputCmd);
+	System.out.println("Input command is from Thread "+threadNo+ " is :" + inputCmd);
 	
 	String[] userInput = inputCmd.split(" ", 2);
 
@@ -51,12 +53,12 @@ try {
 				
 			}
 			if(!processingCmd)
-				break;
+				break;	
+			System.out.println("Thread "+threadNo+ " need to wait as other request is already in process");
 			Thread.sleep(10000);
-			System.out.println("Client need to wait as other request is already in process");
 		}
 		
-		
+		System.out.println("Sending file to Thread "+threadNo);
 		File file= new File(SERVER_DIRECTORY+"/"+userInput[1]);
 		int offset=0;
 		int length=(int)file.length();
@@ -87,7 +89,8 @@ try {
 					System.out.println("sleeping");
 				}
 			}
-			System.out.println("File has been sent!");
+			lockTable.put(commandId,"Finished for get" + userInput[1]);
+			System.out.println("File has been sent to thread "+threadNo+"!");
 		}
 		else{
 			
@@ -97,35 +100,32 @@ try {
 		break;
 
 	case "put":// put file
-		 
+		commandId = lockTable.size() +1;
+		outputStream.writeObject(commandId);
+
 		while(true) {
 			boolean processingCmd=false;
 			for(Map.Entry<Integer,String> entry : lockTable.entrySet()) {
-				if(entry.getValue().equals("In Process for put " + userInput[1])) {
+				if(entry.getValue().equals("In Process for put " + userInput[1]) || entry.getValue().equals("In Process for get " + userInput[1])) {
 					 processingCmd = true;
 				}
 				
 			}
 			if(!processingCmd)
 				break;
+			System.out.println("Thread "+threadNo+" need to wait as other request is already in process");
 			Thread.sleep(10000);
-			System.out.println("Client need to wait as other request is already in process");
 		}
-		commandId = lockTable.size() +1;
-		System.out.println("command id in out"+commandId);
-		outputStream.writeObject(commandId);
-
+		
 		lockTable.put(commandId,"In Process for put " + userInput[1]);
 		FileOutputStream fileStreamPut = new FileOutputStream(SERVER_DIRECTORY+"/copy"+userInput[1]);
-		
+		System.out.println("putting file for Thread "+threadNo);
 		offset=0;
 		length=inputStream.readInt();
 		byte bPut[] = new byte[length];
 		if(length < 1000) {
-			System.out.println("Sending file");
 			inputStream.read(bPut, 0, bPut.length);
 		}else {
-			System.out.println("Sending file 2");
 			for(offset=0; offset<=length; offset+=1000 ) {
 				String state = lockTable.get(Integer.parseInt( String.valueOf(commandId)));
 				if(state.contains("Terminate")) {
@@ -146,7 +146,7 @@ try {
 		
 		fileStreamPut.write(bPut,0,bPut.length);
 		fileStreamPut.flush();
-		System.out.println("File has been stored");
+		System.out.println("File from thread "+threadNo+" been stored!");
 		lockTable.put(commandId,"Finished for put" + userInput[1]);
 		break;
 		

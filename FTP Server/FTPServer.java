@@ -20,7 +20,7 @@ public class FTPServer {
 		
 		int nPort=Integer.parseInt(args[0]);
 		int tPort=Integer.parseInt(args[1]);
-		System.out.println("Server thread starting...");
+		System.out.println("Server started!");
 		
 		NormalServer nThread = new NormalServer(nPort,lockTable);
 		nThread.start();

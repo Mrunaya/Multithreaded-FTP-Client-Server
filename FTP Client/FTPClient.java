@@ -89,7 +89,6 @@ public class FTPClient {
 						
 						int offset=0;
 					if(length<1000) {
-						System.out.println("hello");
 						outputStream.write(bPut, 0, bPut.length);
 					}else {
 						for(offset=0; offset<=length; offset+=1000 ) {

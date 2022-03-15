@@ -15,6 +15,7 @@ public class NormalServer extends Thread{
 	public static Map<Integer, String> lockTable;
 	static Socket socket = null;
 	static int port;
+	static int clientNo=0;
 	public NormalServer(int nPort, HashMap<Integer, String> lockTable) throws IOException { 
 		serverNSocket=new ServerSocket(nPort);
 		this.port=nPort;
@@ -27,7 +28,8 @@ public class NormalServer extends Thread{
 
 			try {
 				socket = serverNSocket.accept();
-				CommandServer nThread = new CommandServer(port,socket,lockTable);
+				clientNo++;
+				CommandServer nThread = new CommandServer(port,socket,lockTable,clientNo);
 				nThread.start();
 			}catch(Exception e) {
 				e.printStackTrace();
