@@ -33,8 +33,15 @@ public class FTPClient {
 				
 				switch (cmdVal[0]) {
 				case "get": //  Get file from server->client
+					if(cmdVal[1].contains("&")) {
+						ClientT runnable = new ClientT(serverName,userCmd,nPort);
+						Thread thread = new Thread(runnable,"thread");
+						thread.start();
+						Thread.sleep(200);	
+					}
+					else {
 					outputStream.writeObject("get "+cmdVal[1]); 
-					int commandID = inputStream.readInt();
+					int commandID = (int)inputStream.readObject();
 					FileOutputStream fileStreamGet = new FileOutputStream("copy".concat(cmdVal[1]));
 					int length=inputStream.readInt();
 					int offset=0;
@@ -57,23 +64,30 @@ public class FTPClient {
 					}
 					fileStreamGet.write(bGet, 0, bGet.length);
 					//outputStream.flush();
+					}
 					break;
 
 				case "put": // Put file
-					
+					if(cmdVal[1].contains("&")) {
+						ClientT runnable = new ClientT(serverName,userCmd,nPort);
+						Thread thread = new Thread(runnable,"thread");
+						thread.start();
+						Thread.sleep(200);	
+					}
+					else {
 					
 					File file = new File(cmdVal[1]);
 					if(file.exists()) {
 						FileInputStream fileStreamPut = new FileInputStream(file);
 						outputStream.writeObject("put "+cmdVal[1]);
-						commandID = (int) inputStream.readObject();
-						length = (int)file.length();
+						int commandID = (int) inputStream.readObject();
+						int length = (int)file.length();
 						byte bPut[] = new byte[length];
 						fileStreamPut.read(bPut, 0, bPut.length);
 						outputStream.writeInt(length);
 						outputStream.flush();
 						
-						offset=0;
+						int offset=0;
 					if(length<1000) {
 						System.out.println("hello");
 						outputStream.write(bPut, 0, bPut.length);
@@ -98,15 +112,11 @@ public class FTPClient {
 						System.out.println("File at the location do not exists!\n");
 					}
 					outputStream.flush();
+					}
 					break;
 
 				
-				case "get&":
-				case "put&": ClientT runnable = new ClientT(serverName,userCmd,nPort);
-				Thread thread = new Thread(runnable,"thread");
-				thread.start();
-				Thread.sleep(200);
-				break;
+			
 				case "delete": // Delete file
 					
 					outputStream.writeObject("delete "+cmdVal[1]);

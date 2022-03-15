@@ -29,11 +29,12 @@ public class ClientT implements Runnable {
 		// TODO Auto-generated method stub
 		outputStream = new  ObjectOutputStream(socket.getOutputStream());
 		  inputStream = new ObjectInputStream(socket.getInputStream());
- 
+		  String[] cmdVal = input.split(" ", 3);
 		switch(cmdVal[0]) {
-	case "get&": //  Get file from server->client
+	case "get": //  Get file from server->client
+		
 		outputStream.writeObject("get "+cmdVal[1]); 
-		int commandID=inputStream.readInt();
+		int commandID=(int)inputStream.readObject();
 		System.out.println("Command ID is:"+commandID);
 		FileOutputStream fileStreamGet = new FileOutputStream("copy".concat(cmdVal[1]));
 		int length=inputStream.readInt();
@@ -59,7 +60,7 @@ public class ClientT implements Runnable {
 		//outputStream.flush();
 		break;
 
-	case "put&": // Put file
+	case "put": // Put file
 		outputStream.writeObject("put "+cmdVal[1]);
 		int commandId=(int) inputStream.readObject();
 		System.out.println("Command ID is:"+commandId);

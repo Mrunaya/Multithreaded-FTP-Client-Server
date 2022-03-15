@@ -41,7 +41,7 @@ try {
 	switch(userInput[0]) {
 	case "get":// get file
 		  commandId = lockTable.size() +1;
-		 outputStream.writeInt(commandId);
+		 outputStream.writeObject(commandId);
 		while(true) {
 			boolean processingCmd=false;
 			for(Map.Entry<Integer,String> entry : lockTable.entrySet()) {
@@ -115,7 +115,6 @@ try {
 		System.out.println("command id in out"+commandId);
 		outputStream.writeObject(commandId);
 
-		System.out.println("Wrote commandif");
 		lockTable.put(commandId,"In Process for put " + userInput[1]);
 		FileOutputStream fileStreamPut = new FileOutputStream(SERVER_DIRECTORY+"/copy"+userInput[1]);
 		
@@ -147,7 +146,7 @@ try {
 		
 		fileStreamPut.write(bPut,0,bPut.length);
 		fileStreamPut.flush();
-		System.out.println("waiting in sleep");
+		System.out.println("File has been stored");
 		lockTable.put(commandId,"Finished for put" + userInput[1]);
 		break;
 		
