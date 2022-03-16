@@ -118,7 +118,7 @@ try {
 		}
 		
 		lockTable.put(commandId,"In Process for put " + userInput[1]);
-		FileOutputStream fileStreamPut = new FileOutputStream(SERVER_DIRECTORY+"/copy"+userInput[1]);
+		FileOutputStream fileStreamPut = new FileOutputStream(SERVER_DIRECTORY+"/"+userInput[1]);
 		System.out.println("putting file for Thread "+threadNo);
 		offset=0;
 		length=inputStream.readInt();
@@ -130,7 +130,7 @@ try {
 				String state = lockTable.get(Integer.parseInt( String.valueOf(commandId)));
 				if(state.contains("Terminate")) {
 					outputStream.writeObject("terminated");
-					File fileP = new File("copy".concat(userInput[1]));
+					File fileP = new File(userInput[1]);
 	                 fileP.delete();
 					break;
 				}else

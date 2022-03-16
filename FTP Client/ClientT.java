@@ -36,7 +36,7 @@ public class ClientT implements Runnable {
 		outputStream.writeObject("get "+cmdVal[1]); 
 		int commandID=(int)inputStream.readObject();
 		System.out.println("Command ID is:"+commandID);
-		FileOutputStream fileStreamGet = new FileOutputStream("copy".concat(cmdVal[1]));
+		FileOutputStream fileStreamGet = new FileOutputStream(cmdVal[1]);
 		int length=inputStream.readInt();
 		int offset=0;
 		byte bGet[] = new byte[length];
@@ -46,7 +46,7 @@ public class ClientT implements Runnable {
 			for(offset=0; offset<=length; offset+=1000 ) {
 				String state = (String)inputStream.readObject();
 	             if(state.contains("terminated")) {
-	            	 File file = new File("copy".concat(cmdVal[1]));
+	            	 File file = new File((cmdVal[1]));
 	                 file.delete();
 	                 break;
 	             }
